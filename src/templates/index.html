@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Gestão de Brinquedos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white p-5 rounded mb-4">
+            <h1 class="display-4">
+                <i class="fas fa-tools me-3"></i>
+                Sistema de Gestão de Equipamentos
+            </h1>
+            <p class="lead">Gerencie seus brinquedos de aluguel de forma eficiente</p>
+            <hr class="my-4" style="border-color: rgba(255,255,255,0.3);">
+            <div class="row">
+                <div class="col-md-6">
+                    <a class="btn btn-light btn-lg me-3" href="{{ url_for('equipamento.novo_equipamento') }}">
+                        <i class="fas fa-plus me-2"></i>Cadastrar Brinquedo
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <a class="btn btn-outline-light btn-lg" href="{{ url_for('equipamento.nova_reserva') }}">
+                        <i class="fas fa-calendar-plus me-2"></i>Nova Reserva
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Equipamentos Disponíveis -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Brinquedos Disponíveis
+                    <span class="badge bg-light text-success ms-2">{{ equipamentos|length }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if equipamentos %}
+                    <div class="list-group list-group-flush">
+                        {% for equipamento in equipamentos %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ equipamento.nome }}</h6>
+                                {% if equipamento.descricao %}
+                                <p class="mb-1 text-muted small">{{ equipamento.descricao }}</p>
+                                {% endif %}
+                            </div>
+                            <span class="badge status-badge status-{{ equipamento.status }}">
+                                {{ equipamento.status.title() }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ url_for('equipamento.listar_equipamentos') }}" class="btn btn-outline-success">
+                            <i class="fas fa-list me-1"></i>Ver Todos os Brinquedos
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhum brinquedo disponível</p>
+                        <a href="{{ url_for('equipamento.novo_equipamento') }}" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>Cadastrar Primeiro Brinquedo
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservas Ativas -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    Reservas Ativas
+                    <span class="badge bg-light text-info ms-2">{{ reservas|length }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if reservas %}
+                    <div class="list-group list-group-flush">
+                        {% for reserva in reservas %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ reserva.equipamento.nome }}</h6>
+                                <small class="text-muted">{{ reserva.duracao_dias() }} dias</small>
+                            </div>
+                            <p class="mb-1">
+                                <strong>Cliente:</strong> {{ reserva.cliente_nome }}
+                            </p>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                {{ reserva.data_inicio.strftime('%d/%m/%Y') }} até {{ reserva.data_fim.strftime('%d/%m/%Y') }}
+                            </small>
+                            <div class="mt-2">
+                                <form method="POST" action="{{ url_for('equipamento.finalizar_reserva', reserva_id=reserva.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                            onclick="return confirm('Tem certeza que deseja finalizar esta reserva?')">
+                                        <i class="fas fa-times me-1"></i>Finalizar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ url_for('equipamento.listar_reservas') }}" class="btn btn-outline-info">
+                            <i class="fas fa-calendar me-1"></i>Ver Todas as Reservas
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhuma reserva ativa</p>
+                        <a href="{{ url_for('equipamento.nova_reserva') }}" class="btn btn-info">
+                            <i class="fas fa-calendar-plus me-1"></i>Criar Primeira Reserva
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estatísticas Rápidas -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Resumo do Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-tools fa-2x text-primary mb-2"></i>
+                            <h4 class="text-primary">{{ equipamentos|length }}</h4>
+                            <p class="text-muted mb-0">Brinquedos Disponíveis</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-calendar-check fa-2x text-success mb-2"></i>
+                            <h4 class="text-success">{{ reservas|length }}</h4>
+                            <p class="text-muted mb-0">Reservas Ativas</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                            <h4 class="text-warning">
+                                {% set total_dias = 0 %}
+                                {% for reserva in reservas %}
+                                    {% set total_dias = total_dias + reserva.duracao_dias() %}
+                                {% endfor %}
+                                {{ total_dias }}
+                            </h4>
+                            <p class="text-muted mb-0">Total de Dias Reservados</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-users fa-2x text-info mb-2"></i>
+                            <h4 class="text-info">{{ reservas|map(attribute='cliente_nome')|unique|list|length }}</h4>
+                            <p class="text-muted mb-0">Clientes Únicos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Equipamento - Sistema de Gestão de Equipamentos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-plus me-2"></i>
+                    Cadastrar Novo Brinquedo
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">
+                            <i class="fas fa-tag me-1"></i>
+                            Nome do Equipamento *
+                        </label>
+                        <input type="text" class="form-control" id="nome" name="nome" required 
+                               placeholder="Ex: Pula-Pula, Cama Elástica etc.">
+                        <div class="form-text">Nome do brinquedo</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>
+                            Descrição
+                        </label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="3" 
+                                  placeholder="Descreva as características, especificações ou observações sobre o equipamento..."></textarea>
+                        <div class="form-text">Informações adicionais sobre o equipamento (opcional)</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="status" class="form-label">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Status Inicial
+                        </label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="disponivel" selected>
+                                <i class="fas fa-check-circle"></i> Disponível
+                            </option>
+                            <option value="manutencao">
+                                <i class="fas fa-wrench"></i> Em Manutenção
+                            </option>
+                        </select>
+                        <div class="form-text">Status inicial do equipamento no sistema</div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('equipamento.index') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            Cadastrar Brinquedo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Informações Adicionais -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Informações sobre Status
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center p-3">
+                            <span class="badge status-badge status-disponivel fs-6 mb-2">Disponível</span>
+                            <p class="small text-muted mb-0">Equipamento pronto para ser reservado</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3">
+                            <span class="badge status-badge status-reservado fs-6 mb-2">Reservado</span>
+                            <p class="small text-muted mb-0">Equipamento com reserva ativa</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3">
+                            <span class="badge status-badge status-manutencao fs-6 mb-2">Manutenção</span>
+                            <p class="small text-muted mb-0">Equipamento em reparo ou manutenção</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Adicionar validação em tempo real
+    document.getElementById('nome').addEventListener('input', function() {
+        const nome = this.value.trim();
+        const submitBtn = document.querySelector('button[type="submit"]');
+        
+        if (nome.length < 3) {
+            this.classList.add('is-invalid');
+            submitBtn.disabled = true;
+        } else {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Contador de caracteres para descrição
+    document.getElementById('descricao').addEventListener('input', function() {
+        const maxLength = 500;
+        const currentLength = this.value.length;
+        
+        if (!document.getElementById('char-counter')) {
+            const counter = document.createElement('div');
+            counter.id = 'char-counter';
+            counter.className = 'form-text';
+            this.parentNode.appendChild(counter);
+        }
+        
+        const counter = document.getElementById('char-counter');
+        counter.textContent = `${currentLength}/${maxLength} caracteres`;
+        
+        if (currentLength > maxLength) {
+            this.classList.add('is-invalid');
+            counter.classList.add('text-danger');
+        } else {
+            this.classList.remove('is-invalid');
+            counter.classList.remove('text-danger');
+        }
+    });
+</script>
+{% endblock %}
+

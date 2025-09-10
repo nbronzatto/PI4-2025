@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Reserva - Sistema de Gestão de Equipamentos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    Criar Nova Reserva
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if equipamentos %}
+                <form method="POST" id="reservaForm">
+                    <div class="mb-3">
+                        <label for="equipamento_id" class="form-label">
+                            <i class="fas fa-tools me-1"></i>
+                            Equipamento *
+                        </label>
+                        <select class="form-select" id="equipamento_id" name="equipamento_id" required>
+                            <option value="">Selecione um equipamento...</option>
+                            {% for equipamento in equipamentos %}
+                            <option value="{{ equipamento.id }}" data-nome="{{ equipamento.nome }}">
+                                {{ equipamento.nome }}
+                                {% if equipamento.descricao %} - {{ equipamento.descricao[:50] }}{% if equipamento.descricao|length > 50 %}...{% endif %}{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Selecione o brinquedo que será reservado</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="data_inicio" class="form-label">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    Data de Início *
+                                </label>
+                                <input type="date" class="form-control" id="data_inicio" name="data_inicio" required>
+                                <div class="form-text">Data de início da reserva</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="data_fim" class="form-label">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    Data de Término *
+                                </label>
+                                <input type="date" class="form-control" id="data_fim" name="data_fim" required>
+                                <div class="form-text">Data de término da reserva</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="cliente_nome" class="form-label">
+                            <i class="fas fa-user me-1"></i>
+                            Nome do Cliente *
+                        </label>
+                        <input type="text" class="form-control" id="cliente_nome" name="cliente_nome" required 
+                               placeholder="Nome completo do cliente">
+                        <div class="form-text">Nome da pessoa ou empresa que está fazendo a reserva</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="cliente_contato" class="form-label">
+                            <i class="fas fa-phone me-1"></i>
+                            Contato do Cliente
+                        </label>
+                        <input type="text" class="form-control" id="cliente_contato" name="cliente_contato" 
+                               placeholder="Telefone, email ou outro contato">
+                        <div class="form-text">Informação de contato do cliente (opcional)</div>
+                    </div>
+
+                    <!-- Resumo da Reserva -->
+                    <div class="card bg-light mb-4" id="resumoReserva" style="display: none;">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-clipboard-list me-2"></i>
+                                Resumo da Reserva
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Equipamento:</strong> <span id="resumoEquipamento">-</span></p>
+                                    <p><strong>Cliente:</strong> <span id="resumoCliente">-</span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Período:</strong> <span id="resumoPeriodo">-</span></p>
+                                    <p><strong>Duração:</strong> <span id="resumoDuracao">-</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('equipamento.index') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i>
+                            Criar Reserva
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <h5>Nenhum Equipamento Disponível</h5>
+                    <p class="text-muted">Não há equipamentos disponíveis para reserva no momento.</p>
+                    <a href="{{ url_for('equipamento.novo_equipamento') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Cadastrar Equipamento
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Lista de Equipamentos Disponíveis -->
+        {% if equipamentos %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Equipamentos Disponíveis ({{ equipamentos|length }})
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for equipamento in equipamentos %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ equipamento.nome }}</h6>
+                                {% if equipamento.descricao %}
+                                <p class="card-text small text-muted">{{ equipamento.descricao }}</p>
+                                {% endif %}
+                                <span class="badge status-badge status-{{ equipamento.status }}">
+                                    {{ equipamento.status.title() }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Definir data mínima como hoje
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('data_inicio').min = hoje;
+    document.getElementById('data_fim').min = hoje;
+
+    // Atualizar data mínima do fim quando início mudar
+    document.getElementById('data_inicio').addEventListener('change', function() {
+        const dataInicio = this.value;
+        document.getElementById('data_fim').min = dataInicio;
+        atualizarResumo();
+    });
+
+    // Atualizar resumo quando qualquer campo mudar
+    document.getElementById('data_fim').addEventListener('change', atualizarResumo);
+    document.getElementById('equipamento_id').addEventListener('change', atualizarResumo);
+    document.getElementById('cliente_nome').addEventListener('input', atualizarResumo);
+
+    function atualizarResumo() {
+        const equipamentoSelect = document.getElementById('equipamento_id');
+        const dataInicio = document.getElementById('data_inicio').value;
+        const dataFim = document.getElementById('data_fim').value;
+        const clienteNome = document.getElementById('cliente_nome').value;
+
+        const resumoDiv = document.getElementById('resumoReserva');
+        
+        if (equipamentoSelect.value && dataInicio && dataFim && clienteNome) {
+            // Mostrar resumo
+            resumoDiv.style.display = 'block';
+            
+            // Atualizar informações
+            const equipamentoNome = equipamentoSelect.options[equipamentoSelect.selectedIndex].dataset.nome;
+            document.getElementById('resumoEquipamento').textContent = equipamentoNome;
+            document.getElementById('resumoCliente').textContent = clienteNome;
+            
+            // Calcular período e duração
+            const inicio = new Date(dataInicio);
+            const fim = new Date(dataFim);
+            const duracao = Math.ceil((fim - inicio) / (1000 * 60 * 60 * 24)) + 1;
+            
+            document.getElementById('resumoPeriodo').textContent = 
+                `${inicio.toLocaleDateString('pt-BR')} até ${fim.toLocaleDateString('pt-BR')}`;
+            document.getElementById('resumoDuracao').textContent = 
+                `${duracao} dia${duracao > 1 ? 's' : ''}`;
+        } else {
+            resumoDiv.style.display = 'none';
+        }
+    }
+
+    // Validação do formulário
+    document.getElementById('reservaForm').addEventListener('submit', function(e) {
+        const dataInicio = new Date(document.getElementById('data_inicio').value);
+        const dataFim = new Date(document.getElementById('data_fim').value);
+        
+        if (dataInicio > dataFim) {
+            e.preventDefault();
+            alert('A data de início não pode ser posterior à data de término!');
+            return false;
+        }
+        
+        if (dataInicio < new Date(hoje)) {
+            e.preventDefault();
+            alert('A data de início não pode ser anterior à data atual!');
+            return false;
+        }
+    });
+</script>
+{% endblock %}
+
