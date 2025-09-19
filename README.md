@@ -8,8 +8,10 @@ Desenvolvido com **Flask + SQLite**, criado para **cadastrar, reservar e gerenci
   ![Tela Principal](/imgs/home.PNG)
 
 * Reservas  
-  ![Reservas](/imgs/reserva.PNG)
+  ![Reservas](/imgs/diagrama_db.PNG)
 
+* Modelagem Banco de Dados  
+  ![Reservas](/imgs/reserva.PNG)
 ## Funcionalidades
 
 ```mermaid
