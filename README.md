@@ -62,3 +62,10 @@ erDiagram
 * Notificações por e-mail
 * API REST para integração
 
+## Iniciando o app
+- `python -m venv env`
+- `. env/bin/activate`
+- `pip install --upgrade pip`
+- `pip install -r requirements.txt`
+- `cd src/`
+- `python main.py`
