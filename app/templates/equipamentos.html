@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Equipamentos - Gestão de Locação de Brinquedos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-tools me-2"></i>
+                Todos os Brinquedos
+                <span class="badge bg-primary ms-2">{{ equipamentos|length }}</span>
+            </h2>
+            <a href="{{ url_for('equipamento.novo_equipamento') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>
+                Cadastrar Novo Brinquedo
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if equipamentos %}
+<!-- Filtros -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <label for="filtroStatus" class="form-label">Filtrar por Status:</label>
+                        <select class="form-select" id="filtroStatus">
+                            <option value="">Todos os Status</option>
+                            <option value="disponivel">Disponível</option>
+                            <option value="reservado">Reservado</option>
+                            <option value="manutencao">Em Manutenção</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="filtroNome" class="form-label">Buscar por Nome:</label>
+                        <input type="text" class="form-control" id="filtroNome" placeholder="Digite o nome do equipamento...">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button type="button" class="btn btn-outline-secondary" onclick="limparFiltros()">
+                                <i class="fas fa-times me-1"></i>Limpar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Equipamentos -->
+<div class="row" id="listaEquipamentos">
+    {% for equipamento in equipamentos %}
+    <div class="col-lg-4 col-md-6 mb-4 equipamento-card"
+         data-status="{{ equipamento.status }}"
+         data-nome="{{ equipamento.nome.lower() }}">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">{{ equipamento.nome }}</h6>
+                <span class="badge status-badge status-{{ equipamento.status }}">
+                    {% if equipamento.status == 'disponivel' %}
+                        <i class="fas fa-check-circle me-1"></i>Disponível
+                    {% elif equipamento.status == 'reservado' %}
+                        <i class="fas fa-calendar-check me-1"></i>Reservado
+                    {% elif equipamento.status == 'manutencao' %}
+                        <i class="fas fa-wrench me-1"></i>Manutenção
+                    {% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                {% if equipamento.descricao %}
+                <p class="card-text">{{ equipamento.descricao }}</p>
+                {% else %}
+                <p class="card-text text-muted">Sem descrição</p>
+                {% endif %}
+
+                <!-- Informações das reservas se houver -->
+                {% if equipamento.reservas %}
+                <div class="mt-3">
+                    <h6 class="text-muted">Reservas:</h6>
+                    {% for reserva in equipamento.reservas %}
+                    <div class="small bg-light p-2 rounded mb-2">
+                        <strong>{{ reserva.cliente_nome }}</strong><br>
+                        <i class="fas fa-calendar me-1"></i>
+                        {{ reserva.data_inicio.strftime('%d/%m/%Y') }} até {{ reserva.data_fim.strftime('%d/%m/%Y') }}
+                        <br>
+                        <span class="text-muted">{{ reserva.duracao_dias() }} dias</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">ID: {{ equipamento.id }}</small>
+                    <div class="d-flex gap-2">
+                        {% if equipamento.status == 'disponivel' %}
+                        <a href="{{ url_for('equipamento.nova_reserva') }}?equipamento={{ equipamento.id }}"
+                           class="btn btn-sm btn-success">
+                            <i class="fas fa-calendar-plus me-1"></i>Reservar
+                        </a>
+                        {% endif %}
+
+                        <form method="POST" action="{{ url_for('equipamento.excluir_equipamento', equipamento_id=equipamento.id) }}"
+                              style="display: inline;"
+                              onsubmit="return confirm('Tem certeza que deseja excluir o equipamento \'{{ equipamento.nome }}\'? Esta ação não pode ser desfeita.')">
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash me-1"></i>Excluir
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Mensagem quando nenhum equipamento for encontrado -->
+<div id="nenhumEquipamento" class="text-center py-5" style="display: none;">
+    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+    <h5>Nenhum brinquedo encontrado</h5>
+    <p class="text-muted">Cadastre um novo brinquedo.</p>
+</div>
+
+{% else %}
+<!-- Estado vazio -->
+<div class="text-center py-5">
+    <i class="fas fa-inbox fa-4x text-muted mb-4"></i>
+    <h3>Nenhum Equipamento Cadastrado</h3>
+    <p class="text-muted mb-4">Cadastre seu primeiro brinquedo no sistema.</p>
+    <a href="{{ url_for('equipamento.novo_equipamento') }}" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus me-2"></i>
+        Cadastrar Brinquedo
+    </a>
+</div>
+{% endif %}
+
+<!-- Estatísticas -->
+{% if equipamentos %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Estatísticas Alugueis
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-tools fa-2x text-primary mb-2"></i>
+                            <h4 class="text-primary">{{ equipamentos|length }}</h4>
+                            <p class="text-muted mb-0">Total de Brinquedos</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                            <h4 class="text-success">{{ equipamentos|selectattr('status', 'equalto', 'disponivel')|list|length }}</h4>
+                            <p class="text-muted mb-0">Disponíveis</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-calendar-check fa-2x text-danger mb-2"></i>
+                            <h4 class="text-danger">{{ equipamentos|selectattr('status', 'equalto', 'reservado')|list|length }}</h4>
+                            <p class="text-muted mb-0">Reservados</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-wrench fa-2x text-warning mb-2"></i>
+                            <h4 class="text-warning">{{ equipamentos|selectattr('status', 'equalto', 'manutencao')|list|length }}</h4>
+                            <p class="text-muted mb-0">Em Manutenção</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Função para filtrar equipamentos
+    function filtrarEquipamentos() {
+        const filtroStatus = document.getElementById('filtroStatus').value.toLowerCase();
+        const filtroNome = document.getElementById('filtroNome').value.toLowerCase();
+        const cards = document.querySelectorAll('.equipamento-card');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const status = card.dataset.status;
+            const nome = card.dataset.nome;
+
+            const statusMatch = !filtroStatus || status === filtroStatus;
+            const nomeMatch = !filtroNome || nome.includes(filtroNome);
+
+            if (statusMatch && nomeMatch) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Mostrar/ocultar mensagem de "nenhum equipamento encontrado"
+        const nenhumEquipamento = document.getElementById('nenhumEquipamento');
+        if (visibleCount === 0 && cards.length > 0) {
+            nenhumEquipamento.style.display = 'block';
+        } else {
+            nenhumEquipamento.style.display = 'none';
+        }
+    }
+
+    // Função para limpar filtros
+    function limparFiltros() {
+        document.getElementById('filtroStatus').value = '';
+        document.getElementById('filtroNome').value = '';
+        filtrarEquipamentos();
+    }
+
+    // Event listeners para filtros
+    document.getElementById('filtroStatus').addEventListener('change', filtrarEquipamentos);
+    document.getElementById('filtroNome').addEventListener('input', filtrarEquipamentos);
+
+    // Verificar se há parâmetro de equipamento na URL (vindo da nova reserva)
+    const urlParams = new URLSearchParams(window.location.search);
+    const equipamentoId = urlParams.get('equipamento');
+    if (equipamentoId) {
+        // Destacar o equipamento específico
+        const card = document.querySelector(`[data-equipamento-id="${equipamentoId}"]`);
+        if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.classList.add('border-primary');
+        }
+    }
+</script>
+{% endblock %}
+

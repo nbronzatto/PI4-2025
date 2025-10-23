@@ -1,42 +1,59 @@
+from flask import Flask, render_template, request, redirect, url_for, session, flash, g
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, current_user
+from flask_bcrypt import Bcrypt
 import os
-import sys
-# DON'T CHANGE THIS !!!
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from flask import Flask, send_from_directory
-from src.database import db, init_db
-from src.models.user import User
-from src.models.equipamento import Equipamento, Reserva
-from src.routes.user import user_bp
-from src.routes.equipamento import equipamento_bp
+db = SQLAlchemy()
+login_manager = LoginManager()
+bcrypt = Bcrypt()
 
-app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
-app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+def create_app():
+    app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
+    app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-app.register_blueprint(user_bp, url_prefix='/api')
-app.register_blueprint(equipamento_bp)
+    # Inicializa as extensões com o app
+    db.init_app(app)
+    bcrypt.init_app(app)  # <-- NOVO
+    login_manager.init_app(app)  # <-- NOVO
 
-# uncomment if you need to use database
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-init_db(app)
+    # Define para onde o Flask-Login deve redirecionar o usuário
+    login_manager.login_view = 'auth.login'  # <-- Define a rota de login (será criada)
+    login_manager.login_message = 'Por favor, faça login para acessar esta página.'
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    static_folder_path = app.static_folder
-    if static_folder_path is None:
-            return "Static folder not configured", 404
+    # -----------------------------------------------
+    # Carregador de Usuário para Flask-Login
+    # -----------------------------------------------
+    @login_manager.user_loader
+    def load_user(user_id):
+        # Esta função é chamada para recarregar o objeto User a partir do ID do usuário na sessão
+        # O User deve ser importado aqui ou definido globalmente, dependendo da sua estrutura
+        from models.user import User  # Supondo que a classe User esteja em models.py
+        return User.query.get(int(user_id))
 
-    if path != "" and os.path.exists(os.path.join(static_folder_path, path)):
-        return send_from_directory(static_folder_path, path)
-    else:
-        index_path = os.path.join(static_folder_path, 'index.html')
-        if os.path.exists(index_path):
-            return send_from_directory(static_folder_path, 'index.html')
-        else:
-            return "index.html not found", 404
+    # Importa e Registra Blueprints
+    from routes.equipamento import equipamento_bp
+    from routes.user import user_bp
+    from routes.auth import auth_bp  # <-- NOVO BLUEPRINT
 
+    app.register_blueprint(equipamento_bp)
+    app.register_blueprint(user_bp)
+    app.register_blueprint(auth_bp, url_prefix='/auth')  # <-- NOVO REGISTRO
+
+    # Rota raiz (index)
+    @app.route('/')
+    def index():
+        # Redireciona para a tela de gestão ou para a página de login
+        if current_user.is_authenticated:
+            return redirect(url_for('equipamento.dashboard'))
+        return redirect(url_for('auth.login'))  # <-- Redireciona para login
+
+    return app
 
 if __name__ == '__main__':
+    app = create_app()
+    with app.app_context():
+        db.create_all()
     app.run(host='0.0.0.0', port=5000, debug=True)

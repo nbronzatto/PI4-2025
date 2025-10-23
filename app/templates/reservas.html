@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block title %}Reservas - Sistema de Gestão de Equipamentos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-calendar-check me-2"></i>
+                Todas as Reservas
+                <span class="badge bg-info ms-2">{{ reservas|length }}</span>
+            </h2>
+            <a href="{{ url_for('equipamento.nova_reserva') }}" class="btn btn-success">
+                <i class="fas fa-calendar-plus me-1"></i>
+                Nova Reserva
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if reservas %}
+<!-- Filtros -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <label for="filtroCliente" class="form-label">Buscar por Cliente:</label>
+                        <input type="text" class="form-control" id="filtroCliente" placeholder="Nome do cliente...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filtroEquipamento" class="form-label">Buscar por Equipamento:</label>
+                        <input type="text" class="form-control" id="filtroEquipamento" placeholder="Nome do equipamento...">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filtroMes" class="form-label">Mês:</label>
+                        <select class="form-select" id="filtroMes">
+                            <option value="">Todos</option>
+                            <option value="01">Janeiro</option>
+                            <option value="02">Fevereiro</option>
+                            <option value="03">Março</option>
+                            <option value="04">Abril</option>
+                            <option value="05">Maio</option>
+                            <option value="06">Junho</option>
+                            <option value="07">Julho</option>
+                            <option value="08">Agosto</option>
+                            <option value="09">Setembro</option>
+                            <option value="10">Outubro</option>
+                            <option value="11">Novembro</option>
+                            <option value="12">Dezembro</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filtroAno" class="form-label">Ano:</label>
+                        <select class="form-select" id="filtroAno">
+                            <option value="">Todos</option>
+                            {% for ano in range(2023, 2026) %}
+                            <option value="{{ ano }}" {% if ano == 2025 %}selected{% endif %}>{{ ano }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button type="button" class="btn btn-outline-secondary" onclick="limparFiltros()">
+                                <i class="fas fa-times me-1"></i>Limpar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Reservas -->
+<div class="row" id="listaReservas">
+    {% for reserva in reservas %}
+    <div class="col-lg-6 mb-4 reserva-card"
+         data-cliente="{{ reserva.cliente_nome.lower() }}"
+         data-equipamento="{{ reserva.equipamento.nome.lower() }}"
+         data-mes="{{ reserva.data_inicio.strftime('%m') }}"
+         data-ano="{{ reserva.data_inicio.strftime('%Y') }}">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-tools me-1"></i>
+                        {{ reserva.equipamento.nome }}
+                    </h6>
+                    <span class="badge bg-light text-info">
+                        {{ reserva.duracao_dias() }} dia{{ 's' if reserva.duracao_dias() > 1 else '' }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <h6 class="text-primary">
+                            <i class="fas fa-user me-1"></i>
+                            {{ reserva.cliente_nome }}
+                        </h6>
+                        {% if reserva.cliente_contato %}
+                        <p class="text-muted small mb-0">
+                            <i class="fas fa-phone me-1"></i>
+                            {{ reserva.cliente_contato }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center p-2 bg-light rounded">
+                            <small class="text-muted d-block">Início</small>
+                            <strong>{{ reserva.data_inicio.strftime('%d/%m/%Y') }}</strong>
+                            <br>
+                            <small class="text-muted">{{ reserva.data_inicio.strftime('%A') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-2 bg-light rounded">
+                            <small class="text-muted d-block">Término</small>
+                            <strong>{{ reserva.data_fim.strftime('%d/%m/%Y') }}</strong>
+                            <br>
+                            <small class="text-muted">{{ reserva.data_fim.strftime('%A') }}</small>
+                        </div>
+                    </div>
+                </div>
+
+                {% if reserva.equipamento.descricao %}
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <strong>Equipamento:</strong> {{ reserva.equipamento.descricao[:100] }}{% if reserva.equipamento.descricao|length > 100 %}...{% endif %}
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        Criada em {{ reserva.data_criacao.strftime('%d/%m/%Y às %H:%M') }}
+                    </small>
+                    <div class="d-flex gap-2">
+                        <form method="POST" action="{{ url_for('equipamento.finalizar_reserva', reserva_id=reserva.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-warning"
+                                    onclick="return confirm('Tem certeza que deseja finalizar esta reserva?\\n\\nEquipamento: {{ reserva.equipamento.nome }}\\nCliente: {{ reserva.cliente_nome }}')">
+                                <i class="fas fa-check me-1"></i>Finalizar
+                            </button>
+                        </form>
+
+                        <form method="POST" action="{{ url_for('equipamento.excluir_reserva', reserva_id=reserva.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Tem certeza que deseja EXCLUIR esta reserva?\\n\\nEquipamento: {{ reserva.equipamento.nome }}\\nCliente: {{ reserva.cliente_nome }}\\n\\nEsta ação não pode ser desfeita!')">
+                                <i class="fas fa-trash me-1"></i>Excluir
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Mensagem quando nenhuma reserva for encontrada -->
+<div id="nenhumaReserva" class="text-center py-5" style="display: none;">
+    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+    <h5>Nenhuma reserva encontrada</h5>
+    <p class="text-muted">Tente ajustar os filtros ou criar uma nova reserva.</p>
+</div>
+
+{% else %}
+<!-- Estado vazio -->
+<div class="text-center py-5">
+    <i class="fas fa-calendar-times fa-4x text-muted mb-4"></i>
+    <h3>Nenhuma Reserva Cadastrada</h3>
+    <p class="text-muted mb-4">Comece criando sua primeira reserva no sistema.</p>
+    <a href="{{ url_for('equipamento.nova_reserva') }}" class="btn btn-success btn-lg">
+        <i class="fas fa-calendar-plus me-2"></i>
+        Criar Primeira Reserva
+    </a>
+</div>
+{% endif %}
+
+<!-- Estatísticas -->
+{% if reservas %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Estatísticas das Reservas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-calendar-check fa-2x text-info mb-2"></i>
+                            <h4 class="text-info">{{ reservas|length }}</h4>
+                            <p class="text-muted mb-0">Total de Reservas</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                            <h4 class="text-warning">
+                                {% set total_dias = reservas|sum(attribute='duracao_dias') %}
+                                {{ total_dias() if total_dias else 0 }}
+                            </h4>
+                            <p class="text-muted mb-0">Total de Dias</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-users fa-2x text-success mb-2"></i>
+                            <h4 class="text-success">{{ reservas|map(attribute='cliente_nome')|unique|list|length }}</h4>
+                            <p class="text-muted mb-0">Clientes Únicos</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-tools fa-2x text-primary mb-2"></i>
+                            <h4 class="text-primary">{{ reservas|map(attribute='equipamento.nome')|unique|list|length }}</h4>
+                            <p class="text-muted mb-0">Equipamentos Reservados</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Clientes -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Clientes Mais Ativos
+                </h6>
+            </div>
+            <div class="card-body">
+                {% set clientes_count = {} %}
+                {% for reserva in reservas %}
+                    {% if clientes_count.update({reserva.cliente_nome: clientes_count.get(reserva.cliente_nome, 0) + 1}) %}{% endif %}
+                {% endfor %}
+                {% for cliente, count in clientes_count.items()[:5] %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>{{ cliente }}</span>
+                    <span class="badge bg-primary">{{ count }} reserva{{ 's' if count > 1 else '' }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-tools me-2"></i>
+                    Equipamentos Mais Reservados
+                </h6>
+            </div>
+            <div class="card-body">
+                {% set equipamentos_count = {} %}
+                {% for reserva in reservas %}
+                    {% if equipamentos_count.update({reserva.equipamento.nome: equipamentos_count.get(reserva.equipamento.nome, 0) + 1}) %}{% endif %}
+                {% endfor %}
+                {% for equipamento, count in equipamentos_count.items()[:5] %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>{{ equipamento }}</span>
+                    <span class="badge bg-success">{{ count }} reserva{{ 's' if count > 1 else '' }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Função para filtrar reservas
+    function filtrarReservas() {
+        const filtroCliente = document.getElementById('filtroCliente').value.toLowerCase();
+        const filtroEquipamento = document.getElementById('filtroEquipamento').value.toLowerCase();
+        const filtroMes = document.getElementById('filtroMes').value;
+        const filtroAno = document.getElementById('filtroAno').value;
+        const cards = document.querySelectorAll('.reserva-card');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const cliente = card.dataset.cliente;
+            const equipamento = card.dataset.equipamento;
+            const mes = card.dataset.mes;
+            const ano = card.dataset.ano;
+
+            const clienteMatch = !filtroCliente || cliente.includes(filtroCliente);
+            const equipamentoMatch = !filtroEquipamento || equipamento.includes(filtroEquipamento);
+            const mesMatch = !filtroMes || mes === filtroMes;
+            const anoMatch = !filtroAno || ano === filtroAno;
+
+            if (clienteMatch && equipamentoMatch && mesMatch && anoMatch) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Mostrar/ocultar mensagem de "nenhuma reserva encontrada"
+        const nenhumaReserva = document.getElementById('nenhumaReserva');
+        if (visibleCount === 0 && cards.length > 0) {
+            nenhumaReserva.style.display = 'block';
+        } else {
+            nenhumaReserva.style.display = 'none';
+        }
+    }
+
+    // Função para limpar filtros
+    function limparFiltros() {
+        document.getElementById('filtroCliente').value = '';
+        document.getElementById('filtroEquipamento').value = '';
+        document.getElementById('filtroMes').value = '';
+        document.getElementById('filtroAno').value = '';
+        filtrarReservas();
+    }
+
+    // Event listeners para filtros
+    document.getElementById('filtroCliente').addEventListener('input', filtrarReservas);
+    document.getElementById('filtroEquipamento').addEventListener('input', filtrarReservas);
+    document.getElementById('filtroMes').addEventListener('change', filtrarReservas);
+    document.getElementById('filtroAno').addEventListener('change', filtrarReservas);
+
+    // Definir ano atual como padrão
+    const anoAtual = new Date().getFullYear();
+    document.getElementById('filtroAno').value = anoAtual;
+</script>
+{% endblock %}
+

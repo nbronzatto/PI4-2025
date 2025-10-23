@@ -1,11 +1,13 @@
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask_login import login_required
 from datetime import datetime, date
-from src.database import db
-from src.models.equipamento import Equipamento, Reserva
+
 
 equipamento_bp = Blueprint('equipamento', __name__)
 
 @equipamento_bp.route('/')
+@login_required
 def index():
     """Página principal com listagem de equipamentos e reservas"""
     equipamentos_disponiveis = Equipamento.query.filter_by(status='disponivel').all()
@@ -16,12 +18,14 @@ def index():
                          reservas=reservas_ativas)
 
 @equipamento_bp.route('/equipamentos')
+@login_required
 def listar_equipamentos():
     """Lista todos os equipamentos"""
     equipamentos = Equipamento.query.all()
     return render_template('equipamentos.html', equipamentos=equipamentos)
 
 @equipamento_bp.route('/equipamentos/novo', methods=['GET', 'POST'])
+@login_required
 def novo_equipamento():
     """Cadastrar novo equipamento"""
     if request.method == 'POST':
@@ -43,7 +47,7 @@ def novo_equipamento():
             db.session.add(equipamento)
             db.session.commit()
             flash(f'Equipamento "{nome}" cadastrado com sucesso!', 'success')
-            return redirect(url_for('equipamento.index'))
+            return redirect(url_for('equipamento.dashboard'))
         except Exception as e:
             db.session.rollback()
             flash('Erro ao cadastrar equipamento. Tente novamente.', 'error')
@@ -130,7 +134,7 @@ def nova_reserva():
             equipamento.status = 'reservado'
             db.session.commit()
             flash(f'Reserva criada com sucesso para {cliente_nome}!', 'success')
-            return redirect(url_for('equipamento.index'))
+            return redirect(url_for('equipamento.dashboard'))
         except Exception as e:
             db.session.rollback()
             flash('Erro ao criar reserva. Tente novamente.', 'error')
@@ -180,12 +184,12 @@ def excluir_reserva(reserva_id):
         db.session.commit()
         
         flash(f'Reserva excluída com sucesso! Equipamento "{equipamento.nome}" está novamente disponível.', 'success')
-        return redirect(url_for('equipamento.listar_reservas'))
+        return redirect(url_for('equipamento.reservas'))
         
     except Exception as e:
         db.session.rollback()
         flash('Erro ao excluir reserva. Tente novamente.', 'error')
-        return redirect(url_for('equipamento.listar_reservas'))
+        return redirect(url_for('equipamento.reservas'))
 
 @equipamento_bp.route('/reservas/<int:reserva_id>/finalizar', methods=['POST'])
 def finalizar_reserva(reserva_id):
@@ -204,7 +208,7 @@ def finalizar_reserva(reserva_id):
         db.session.rollback()
         flash('Erro ao finalizar reserva. Tente novamente.', 'error')
     
-    return redirect(url_for('equipamento.index'))
+    return redirect(url_for('equipamento.dashboard'))
 
 # API endpoints para dados JSON (opcional)
 @equipamento_bp.route('/api/equipamentos')

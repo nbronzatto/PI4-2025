@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header bg-dark text-white text-center">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-lock me-2"></i>
+                    Acesso ao Sistema
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Usuário</label>
+                        <input type="text" class="form-control" id="username" name="username" required
+                               placeholder="Seu nome de usuário">
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="password" name="password" required
+                               placeholder="Sua senha">
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Entrar
+                        </button>
+                    </div>
+                </form>
+                {% if not User.query.first() %}
+                <hr>
+                <div class="text-center">
+                    <small>Primeiro acesso? <a href="{{ url_for('auth.register') }}?allow_init=1">Registrar Administrador</a></small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

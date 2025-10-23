@@ -60,7 +60,7 @@
                             <i class="fas fa-user me-1"></i>
                             Nome do Cliente *
                         </label>
-                        <input type="text" class="form-control" id="cliente_nome" name="cliente_nome" required 
+                        <input type="text" class="form-control" id="cliente_nome" name="cliente_nome" required
                                placeholder="Nome completo do cliente">
                         <div class="form-text">Nome da pessoa ou empresa que está fazendo a reserva</div>
                     </div>
@@ -70,7 +70,7 @@
                             <i class="fas fa-phone me-1"></i>
                             Contato do Cliente
                         </label>
-                        <input type="text" class="form-control" id="cliente_contato" name="cliente_contato" 
+                        <input type="text" class="form-control" id="cliente_contato" name="cliente_contato"
                                placeholder="Telefone, email ou outro contato">
                         <div class="form-text">Informação de contato do cliente (opcional)</div>
                     </div>
@@ -182,24 +182,24 @@
         const clienteNome = document.getElementById('cliente_nome').value;
 
         const resumoDiv = document.getElementById('resumoReserva');
-        
+
         if (equipamentoSelect.value && dataInicio && dataFim && clienteNome) {
             // Mostrar resumo
             resumoDiv.style.display = 'block';
-            
+
             // Atualizar informações
             const equipamentoNome = equipamentoSelect.options[equipamentoSelect.selectedIndex].dataset.nome;
             document.getElementById('resumoEquipamento').textContent = equipamentoNome;
             document.getElementById('resumoCliente').textContent = clienteNome;
-            
+
             // Calcular período e duração
             const inicio = new Date(dataInicio);
             const fim = new Date(dataFim);
             const duracao = Math.ceil((fim - inicio) / (1000 * 60 * 60 * 24)) + 1;
-            
-            document.getElementById('resumoPeriodo').textContent = 
+
+            document.getElementById('resumoPeriodo').textContent =
                 `${inicio.toLocaleDateString('pt-BR')} até ${fim.toLocaleDateString('pt-BR')}`;
-            document.getElementById('resumoDuracao').textContent = 
+            document.getElementById('resumoDuracao').textContent =
                 `${duracao} dia${duracao > 1 ? 's' : ''}`;
         } else {
             resumoDiv.style.display = 'none';
@@ -210,13 +210,13 @@
     document.getElementById('reservaForm').addEventListener('submit', function(e) {
         const dataInicio = new Date(document.getElementById('data_inicio').value);
         const dataFim = new Date(document.getElementById('data_fim').value);
-        
+
         if (dataInicio > dataFim) {
             e.preventDefault();
             alert('A data de início não pode ser posterior à data de término!');
             return false;
         }
-        
+
         if (dataInicio < new Date(hoje)) {
             e.preventDefault();
             alert('A data de início não pode ser anterior à data atual!');
