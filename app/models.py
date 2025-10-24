@@ -3,6 +3,7 @@
 from app import db, bcrypt
 from flask_login import UserMixin
 from datetime import datetime, timedelta
+from sqlalchemy.ext.hybrid import hybrid_property
 
 
 # -----------------------------------------------
@@ -82,6 +83,14 @@ class Reserva(db.Model):
         """Calcula a duração da reserva em dias."""
         # Adiciona 1 dia para incluir o dia de término
         return (self.data_fim - self.data_inicio).days + 1
+
+    @property
+    def duracao_dias_prop(self):
+        # Garante que data_fim e data_inicio são válidos
+        if self.data_fim and self.data_inicio:
+            # Retorna a duração como um número inteiro
+            return (self.data_fim - self.data_inicio).days + 1
+        return 0
 
     def to_dict(self):
         return {

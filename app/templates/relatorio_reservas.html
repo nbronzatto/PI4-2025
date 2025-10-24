@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Relatório de Reservas - {{ now().strftime('%Y-%m-%d') }}</title>
+    <style>
+        /* Estilos CSS específicos para o PDF (WeasyPrint suporta @page para cabeçalhos e rodapés) */
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body { font-family: sans-serif; }
+        table { width: 100%; border-collapse: collapse; page-break-inside: avoid;}
+        th, td { border: 1px solid #ccc; padding: 8px; font-size: 10pt; }
+        h1 { color: #007bff; }
+    </style>
+</head>
+<body>
+    <h1>Relatório de Reservas</h1>
+    <p>Período: {{ data_inicio }} a {{ data_fim }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Equipamento</th>
+                <th>Cliente</th>
+                <th>Início</th>
+                <th>Término</th>
+                <th>Dias</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reserva in reservas_filtradas %}
+            <tr>
+                <td>{{ reserva.equipamento.nome }}</td>
+                <td>{{ reserva.cliente_nome }}</td>
+                <td>{{ reserva.data_inicio.strftime('%d/%m/%Y') }}</td>
+                <td>{{ reserva.data_fim.strftime('%d/%m/%Y') }}</td>
+                <td>{{ reserva.duracao_dias() }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Total de Reservas: {{ reservas_filtradas|length }}</h3>
+</body>
+</html>

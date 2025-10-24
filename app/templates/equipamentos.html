@@ -10,6 +10,10 @@
                 <i class="fas fa-tools me-2"></i>
                 Todos os Brinquedos
                 <span class="badge bg-primary ms-2">{{ equipamentos|length }}</span>
+                <button type="button" class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalFiltroPDFEquipamento">
+                    <i class="fas fa-file-pdf me-1"></i>
+                    Extrair Relatório de Brinquedos
+                </button>
             </h2>
             <a href="{{ url_for('equipamento.novo_equipamento') }}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>
@@ -245,6 +249,68 @@
             card.classList.add('border-primary');
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const formEquipamento = document.getElementById('formFiltroPDFEquipamento');
+
+        if (formEquipamento) {
+            formEquipamento.addEventListener('submit', function(event) {
+                const modalElement = document.getElementById('modalFiltroPDFEquipamento');
+
+                // Fecha o modal antes de enviar o formulário
+                if (typeof bootstrap !== 'undefined') {
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                    }
+                } else {
+                    // Fallback
+                    modalElement.classList.remove('show');
+                    modalElement.style.display = 'none';
+                    document.body.classList.remove('modal-open');
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.parentNode.removeChild(backdrop);
+                    }
+                }
+            });
+        }
+    });
 </script>
+
+<div class="modal fade" id="modalFiltroPDFEquipamento" tabindex="-1" aria-labelledby="modalFiltroPDFEquipamentoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalFiltroPDFEquipamentoLabel">
+                    <i class="fas fa-filter me-2"></i>
+                    Filtro para Relatório de Brinquedos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formFiltroPDFEquipamento" method="POST" action="{{ url_for('equipamento.gerar_relatorio_equipamento_pdf') }}">
+                <div class="modal-body">
+                    <p class="text-muted">Selecione o filtro para listar os brinquedos no relatório.</p>
+
+                    <div class="mb-3">
+                        <label for="status_filtro" class="form-label">Status do Brinquedo</label>
+                        <select class="form-select" id="status_filtro" name="status_filtro">
+                            <option value="">Todos os Status</option>
+                            <option value="disponivel">Disponível</option>
+                            <option value="manutencao">Manutenção</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-file-pdf me-2"></i>
+                        Gerar e Baixar PDF
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 

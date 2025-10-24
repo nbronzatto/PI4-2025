@@ -10,6 +10,10 @@
                 <i class="fas fa-calendar-check me-2"></i>
                 Todas as Reservas
                 <span class="badge bg-info ms-2">{{ reservas|length }}</span>
+                <button type="button" class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalFiltroPDF">
+                    <i class="fas fa-file-pdf me-1"></i>
+                    Extrair Relatório PDF
+                </button>
             </h2>
             <a href="{{ url_for('equipamento.nova_reserva') }}" class="btn btn-success">
                 <i class="fas fa-calendar-plus me-1"></i>
@@ -210,8 +214,8 @@
                         <div class="p-3">
                             <i class="fas fa-clock fa-2x text-warning mb-2"></i>
                             <h4 class="text-warning">
-                                {% set total_dias = reservas|sum(attribute='duracao_dias') %}
-                                {{ total_dias() if total_dias else 0 }}
+                                {% set total_dias = reservas|sum(attribute='duracao_dias_prop') %}
+                                {{ total_dias }}
                             </h4>
                             <p class="text-muted mb-0">Total de Dias</p>
                         </div>
@@ -251,7 +255,8 @@
                 {% for reserva in reservas %}
                     {% if clientes_count.update({reserva.cliente_nome: clientes_count.get(reserva.cliente_nome, 0) + 1}) %}{% endif %}
                 {% endfor %}
-                {% for cliente, count in clientes_count.items()[:5] %}
+                {% set top_clientes = (clientes_count.items()|sort(attribute=1, reverse=true)|list)[:5] %}
+                {% for cliente, count in top_clientes %}
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span>{{ cliente }}</span>
                     <span class="badge bg-primary">{{ count }} reserva{{ 's' if count > 1 else '' }}</span>
@@ -273,7 +278,8 @@
                 {% for reserva in reservas %}
                     {% if equipamentos_count.update({reserva.equipamento.nome: equipamentos_count.get(reserva.equipamento.nome, 0) + 1}) %}{% endif %}
                 {% endfor %}
-                {% for equipamento, count in equipamentos_count.items()[:5] %}
+                {% set top_equipamentos = (equipamentos_count.items()|sort(attribute=1, reverse=true)|list)[:5] %}
+                {% for equipamento, count in top_equipamentos %}
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span>{{ equipamento }}</span>
                     <span class="badge bg-success">{{ count }} reserva{{ 's' if count > 1 else '' }}</span>
@@ -343,6 +349,78 @@
     // Definir ano atual como padrão
     const anoAtual = new Date().getFullYear();
     document.getElementById('filtroAno').value = anoAtual;
+
+    // NOVO CÓDIGO PARA FECHAR O MODAL APÓS O SUBMIT
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('formFiltroPDF');
+
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                // 1. Encontra a instância do modal Bootstrap
+                const modalElement = document.getElementById('modalFiltroPDF');
+
+                // Verifica se a biblioteca Bootstrap está carregada
+                if (typeof bootstrap !== 'undefined') {
+                    // 2. Obtém o objeto modal do Bootstrap
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+
+                    // 3. Oculta o modal
+                    if (modal) {
+                        modal.hide();
+                    }
+                } else {
+                    // Fallback simples (menos elegante)
+                    modalElement.classList.remove('show');
+                    modalElement.style.display = 'none';
+                    document.body.classList.remove('modal-open');
+
+                    // Remover o backdrop
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.parentNode.removeChild(backdrop);
+                    }
+                }
+
+                // O evento de submissão continua, enviando o formulário POST.
+                // Não usamos event.preventDefault() porque queremos que o formulário seja enviado.
+            });
+        }
+    });
 </script>
+
+<div class="modal fade" id="modalFiltroPDF" tabindex="-1" aria-labelledby="modalFiltroPDFLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalFiltroPDFLabel">
+                    <i class="fas fa-filter me-2"></i>
+                    Filtro para Relatório PDF
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formFiltroPDF" method="POST" action="{{ url_for('equipamento.gerar_relatorio_pdf') }}">
+                <div class="modal-body">
+                    <p class="text-muted">Selecione o período de tempo para o relatório de reservas.</p>
+
+                    <div class="mb-3">
+                        <label for="data_inicio" class="form-label">Data de Início (Opcional)</label>
+                        <input type="date" class="form-control" id="data_inicio" name="data_inicio">
+                    </div>
+                    <div class="mb-3">
+                        <label for="data_fim" class="form-label">Data de Fim (Opcional)</label>
+                        <input type="date" class="form-control" id="data_fim" name="data_fim">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-file-pdf me-2"></i>
+                        Gerar e Baixar PDF
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
